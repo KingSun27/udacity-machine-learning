@@ -60,7 +60,7 @@
 # - `train_targets`, `valid_targets`, `test_targets` - 包含独热编码分类标签的numpy数组
 # - `dog_names` - 由字符串构成的与标签相对应的狗的种类
 
-# In[1]:
+# In[8]:
 
 
 from sklearn.datasets import load_files       
@@ -95,7 +95,7 @@ print('There are %d test dog images.'% len(test_files))
 # 
 # 在下方的代码单元中，我们导入人脸图像数据集，文件所在路径存储在名为 `human_files` 的 numpy 数组。
 
-# In[2]:
+# In[9]:
 
 
 import random
@@ -118,7 +118,7 @@ print(human_files.shape)
 # 
 # 在如下代码单元中，我们将演示如何使用这个检测模型在样本图像中找到人脸。
 
-# In[3]:
+# In[10]:
 
 
 import cv2                
@@ -161,7 +161,7 @@ plt.show()
 # 
 # 我们可以将这个程序封装为一个函数。该函数的输入为人脸图像的**路径**，当图像中包含人脸时，该函数返回 `True`，反之返回 `False`。该函数定义如下所示。
 
-# In[4]:
+# In[11]:
 
 
 # 如果img_path路径表示的图像检测到了脸，返回"True" 
@@ -187,7 +187,7 @@ def face_detector(img_path):
 # 
 # 理想情况下，人图像中检测到人脸的概率应当为100%，而狗图像中检测到人脸的概率应该为0%。你会发现我们的算法并非完美，但结果仍然是可以接受的。我们从每个数据集中提取前100个图像的文件路径，并将它们存储在`human_files_short`和`dog_files_short`中。
 
-# In[5]:
+# In[14]:
 
 
 human_files_short = human_files[:100]
@@ -197,19 +197,11 @@ dog_files_short = train_files[:100]
 
 ## TODO: 基于human_files_short和dog_files_short
 ## 中的图像测试face_detector的表现
-def face_detector_array(img_path_arr):
-    human_face_num = 0
-    for path in img_path_arr:
-        if face_detector(path):
-            human_face_num += 1
-    return human_face_num
+def detect(detector,files):
+    return np.mean([detector(f) for f in files])
 
-
-recognized_human_percent_in_human_files =  np.mean(face_detector_array(human_files_short))/100
-recognized_human_percent_in_dog_files =  np.mean(face_detector_array(dog_files_short))/100
-
-print("human_files 的前100张图像中，能够检测到人脸的图像占比:%1.2f" % recognized_human_percent_in_human_files)
-print("dog_files 的前100张图像中，能够检测到人脸的图像占比:%1.2f" % recognized_human_percent_in_dog_files)
+print('human: {:.2%}'.format(detect(face_detector,human_files_short)))
+print('dog: {:.2%}'.format(detect(face_detector,dog_files_short)))
 
 
 # ---
@@ -232,14 +224,14 @@ print("dog_files 的前100张图像中，能够检测到人脸的图像占比:%1
 # 
 # 我们建议在你的算法中使用opencv的人脸检测模型去检测人类图像，不过你可以自由地探索其他的方法，尤其是尝试使用深度学习来解决它:)。请用下方的代码单元来设计和测试你的面部监测算法。如果你决定完成这个_选做_任务，你需要报告算法在每一个数据集上的表现。
 
-# In[6]:
+# In[15]:
 
 
 ## (选做) TODO: 报告另一个面部检测算法在LFW数据集上的表现
 ### 你可以随意使用所需的代码单元数
 
 
-# In[7]:
+# In[16]:
 
 
 from PIL import Image
@@ -266,7 +258,7 @@ dog_train = load_data( train_files[100:100 + samples],photo_size)
 human_train.shape,dog_train.shape
 
 
-# In[8]:
+# In[17]:
 
 
 #整理一
@@ -281,7 +273,7 @@ shuffled_train_X,shuffled_train_y = shuffle(train_X,train_y, random_state=0)
 train_X.shape,train_y.shape
 
 
-# In[9]:
+# In[18]:
 
 
 # 可视化数据
@@ -293,7 +285,7 @@ for id,ax in zip(rand_idxs,m_axs.flatten()):
     ax.set_title(shuffled_train_y[id])
 
 
-# In[10]:
+# In[42]:
 
 
 # 设计模型
@@ -322,19 +314,19 @@ model.add(Dense(256, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(2, activation='softmax'))
 
-sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-model.compile(loss='categorical_crossentropy', optimizer=sgd)
+
+model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.summary()
 
 
-# In[11]:
+# In[43]:
 
 
 # 训练模型
 model.fit(shuffled_train_X,shuffled_train_y,epochs=20,batch_size=128)
 
 
-# In[12]:
+# In[44]:
 
 
 # 预测以及探索算法在每一个数据集上的表现
@@ -345,31 +337,9 @@ dog_test = load_data( dog_files_short,photo_size)/255
 human_pre = model.predict(human_test)
 dog_pre = model.predict(dog_test)
 
-np.mean(1-human_pre.argmax(axis=1)),np.mean(1-dog_pre.argmax(axis=1))
+print('human: {:.2%}'.format(np.mean(1-human_pre.argmax(axis=1))))
+print('dog: {:.2%}'.format(np.mean(1-dog_pre.argmax(axis=1))))
 
-
-# In[13]:
-
-
-'''
-import matplotlib.image as mpimg
-
-
-#观察一下分类错误的图片
-human_predict_wrong_id = human_pre.argmax(axis=1).argmax()
-dog_predict_wrong_id = dog_pre.argmax(axis=1).argmin()
-
-fig, (ax1,ax2) = plt.subplots(1,2)
-img1 =  mpimg.imread(human_files_short[human_predict_wrong_id])
-img2 =  mpimg.imread(dog_files_short[dog_predict_wrong_id])
-
-ax1.imshow(img1)
-ax2.imshow(img2)
-'''
-
-
-# - human_files 的前100张图像中，能够检测到人脸的图像占比1.00
-# - dog_files 的前100张图像中，能够检测到人脸的图像占比0.02
 
 # ---
 # <a id='step2'></a>
@@ -380,7 +350,7 @@ ax2.imshow(img2)
 # 
 # ImageNet 这目前一个非常流行的数据集，常被用来测试图像分类等计算机视觉任务相关的算法。它包含超过一千万个 URL，每一个都链接到 [1000 categories](https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a) 中所对应的一个物体的图像。任给输入一个图像，该 ResNet-50 模型会返回一个对图像中物体的预测结果。
 
-# In[14]:
+# In[23]:
 
 
 from keras.applications.resnet50 import ResNet50
@@ -402,7 +372,7 @@ ResNet50_model = ResNet50(weights='imagenet')
 # 
 # - `paths_to_tensor` 函数将图像路径的字符串组成的 numpy 数组作为输入，并返回一个4维张量，各维度尺寸为 `(nb_samples, 224, 224, 3)`。 在这里，`nb_samples`是提供的图像路径的数据中的样本数量或图像数量。你也可以将 `nb_samples` 理解为数据集中3维张量的个数（每个3维张量表示一个不同的图像。
 
-# In[15]:
+# In[24]:
 
 
 from keras.preprocessing import image                  
@@ -435,7 +405,7 @@ def paths_to_tensor(img_paths):
 # 通过对预测出的向量取用 argmax 函数（找到有最大概率值的下标序号），我们可以得到一个整数，即模型预测到的物体的类别。进而根据这个 [清单](https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a)，我们能够知道这具体是哪个品种的狗狗。
 # 
 
-# In[16]:
+# In[25]:
 
 
 from keras.applications.resnet50 import preprocess_input, decode_predictions
@@ -452,7 +422,7 @@ def ResNet50_predict_labels(img_path):
 # 
 # 我们通过这些想法来完成下方的 `dog_detector` 函数，如果从图像中检测到狗就返回 `True`，否则返回 `False`。
 
-# In[17]:
+# In[26]:
 
 
 def dog_detector(img_path):
@@ -472,15 +442,13 @@ def dog_detector(img_path):
 # - `human_files_short`中图像检测到狗狗的百分比？
 # - `dog_files_short`中图像检测到狗狗的百分比？
 
-# In[18]:
+# In[27]:
 
 
 ### TODO: 测试dog_detector函数在human_files_short和dog_files_short的表现
 
-human_contain_dog = [dog_detector(file) for file in human_files_short]
-dog_contain_dog = [dog_detector(file) for file in dog_files_short]
-
-np.mean(human_contain_dog),np.mean(dog_contain_dog)
+print('human: {:.2%}'.format(detect(dog_detector, human_files_short)))
+print('dog: {:.2%}'.format(detect(dog_detector, dog_files_short)))
 
 
 # ---
@@ -524,7 +492,7 @@ np.mean(human_contain_dog),np.mean(dog_contain_dog)
 # 
 # 通过对每张图像的像素值除以255，我们对图像实现了归一化处理。
 
-# In[19]:
+# In[28]:
 
 
 from PIL import ImageFile                            
@@ -536,7 +504,7 @@ valid_tensors = paths_to_tensor(valid_files).astype('float32')/255
 test_tensors = paths_to_tensor(test_files).astype('float32')/255
 
 
-# In[20]:
+# In[29]:
 
 
 train_tensors.shape
@@ -576,11 +544,11 @@ train_tensors.shape
 # - GlobalAveragePooling2D:减少参数，展开
 # - dense：线性计算把输出指定为狗狗类别的数量
 
-# In[21]:
+# In[59]:
 
 
 from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
-from keras.layers import Dropout, Flatten, Dense
+from keras.layers import Dropout, Flatten, Dense,BatchNormalization,Activation
 from keras.models import Sequential
 
 model = Sequential()
@@ -588,23 +556,35 @@ model = Sequential()
 ### TODO: 定义你的网络架构
 model = Sequential()
 model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)))
+model.add(Conv2D(32, (3, 3)))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
 model.add(Conv2D(32, (3, 3), activation='relu'))
+model.add(Conv2D(32, (3, 3)))
 model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
 
 model.add(Conv2D(64, (3, 3), activation='relu'))
-model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (3, 3)))
 model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+
+
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (3, 3)))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
 
 model.add(Conv2D(128, (3, 3), activation='relu'))
 model.add(Conv2D(128, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-
-model.add(Conv2D(256, (3, 3), activation='relu'))
-model.add(Conv2D(256, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-
-model.add(Conv2D(256, (3, 3), activation='relu'))
-model.add(Conv2D(256, (3, 3), activation='relu'))
 model.add(GlobalAveragePooling2D())
 
 model.add(Dropout(0.5))
@@ -613,11 +593,11 @@ model.add(Dense(133, activation='softmax'))
 model.summary()
 
 
-# In[22]:
+# In[60]:
 
 
 ## 编译模型
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 # ---
@@ -637,29 +617,39 @@ model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['ac
 # 
 # 
 
-# In[23]:
+# In[67]:
 
 
-from keras.callbacks import ModelCheckpoint  
+from keras.callbacks import ModelCheckpoint,EarlyStopping  
+from keras.preprocessing.image import ImageDataGenerator
 from time import time
 
 ### TODO: 设置训练模型的epochs的数量
 start = time()
-epochs = 5
+epochs = 20
 
 ### 不要修改下方代码
 
 checkpointer = ModelCheckpoint(filepath='saved_models/weights.best.from_scratch.hdf5', 
                                verbose=1, save_best_only=True)
 
-model.fit(train_tensors, train_targets, 
-          validation_data=(valid_tensors, valid_targets),
-          epochs=epochs, batch_size=20, callbacks=[checkpointer], verbose=1)
+datagen = ImageDataGenerator(
+    featurewise_center=True,
+    featurewise_std_normalization=True,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    horizontal_flip=True)
+
+model.fit_generator(datagen.flow(train_tensors, train_targets, batch_size=20),
+                    steps_per_epoch=len(train_tensors) / 32, validation_data=(valid_tensors, valid_targets),
+                    epochs=epochs, callbacks=[checkpointer], verbose=1)
+
 
 print(time()-start)
 
 
-# In[24]:
+# In[56]:
 
 
 ## 加载具有最好验证loss的模型
@@ -671,7 +661,7 @@ model.load_weights('saved_models/weights.best.from_scratch.hdf5')
 # 
 # 在狗图像的测试数据集上试用你的模型。确保测试准确率大于1%。
 
-# In[25]:
+# In[68]:
 
 
 # 获取测试数据集中每一个图像所预测的狗品种的index
@@ -692,7 +682,7 @@ print('Test accuracy: %.4f%%' % test_accuracy)
 
 # ### 得到从图像中提取的特征向量（Bottleneck Features）
 
-# In[26]:
+# In[69]:
 
 
 bottleneck_features = np.load('/data/bottleneck_features/DogVGG16Data.npz')
@@ -707,7 +697,7 @@ train_VGG16.shape,valid_VGG16.shape,test_VGG16.shape
 # 
 # 该模型使用预训练的 VGG-16 模型作为固定的图像特征提取器，其中 VGG-16 最后一层卷积层的输出被直接输入到我们的模型。我们只需要添加一个全局平均池化层以及一个全连接层，其中全连接层使用 softmax 激活函数，对每一个狗的种类都包含一个节点。
 
-# In[27]:
+# In[70]:
 
 
 VGG16_model = Sequential()
@@ -717,7 +707,7 @@ VGG16_model.add(Dense(133, activation='softmax'))
 VGG16_model.summary()
 
 
-# In[28]:
+# In[71]:
 
 
 ## 编译模型
@@ -725,7 +715,7 @@ VGG16_model.summary()
 VGG16_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
 
-# In[29]:
+# In[72]:
 
 
 ## 训练模型
@@ -738,7 +728,7 @@ VGG16_model.fit(train_VGG16, train_targets,
           epochs=20, batch_size=20, callbacks=[checkpointer], verbose=1)
 
 
-# In[30]:
+# In[73]:
 
 
 ## 加载具有最好验证loss的模型
@@ -749,7 +739,7 @@ VGG16_model.load_weights('saved_models/weights.best.VGG16.hdf5')
 # ### 测试模型
 # 现在，我们可以测试此CNN在狗图像测试数据集中识别品种的效果如何。我们在下方打印出测试准确率。
 
-# In[31]:
+# In[74]:
 
 
 # 获取测试数据集中每一个图像所预测的狗品种的index
@@ -762,7 +752,7 @@ print('Test accuracy: %.4f%%' % test_accuracy)
 
 # ### 使用模型预测狗的品种
 
-# In[32]:
+# In[75]:
 
 
 from extract_bottleneck_features import *
@@ -805,7 +795,7 @@ def VGG16_predict_breed(img_path):
 #     valid_{network} = bottleneck_features['valid']
 #     test_{network} = bottleneck_features['test']
 
-# In[36]:
+# In[76]:
 
 
 ### TODO: 从另一个预训练的CNN获取bottleneck特征
@@ -839,9 +829,13 @@ train_Resnet50.shape,valid_Resnet50.shape,test_Resnet50.shape
 # - 我选择从Resnet50提取的特征向量来训练，因为Resnet50计算量较小，表现较高。
 # - 我用Resnet50提取的特征向量中一行的shape作为输入，输出133维的向量，因为狗的种类是133种
 # - 因为是多分类问题，激活函数使用softmax
+# - 使用迁移学习的原因是：
+#     1. 都是图像分类问题，Resnet50已经使用花费计算资源训练，虽然最终的目标类别不一样，但是Resnet50学习到的特征可以复用。
+#     2. 可以节约大量时间，计算资源
+# - 之前的尝试不成功，由于模型复杂度不够，而且训练的批次较少。
 # 
 
-# In[37]:
+# In[77]:
 
 
 ### TODO: 定义你的框架
@@ -852,7 +846,7 @@ Resnet50_model.add(Dense(133, activation='softmax'))
 Resnet50_model.summary()
 
 
-# In[38]:
+# In[78]:
 
 
 ### TODO: 编译模型
@@ -872,7 +866,7 @@ Resnet50_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', met
 # 当然，你也可以对训练集进行 [数据增强](https://blog.keras.io/building-powerful-image-classification-models-using-very-little-data.html) 以优化模型的表现，不过这不是必须的步骤。
 # 
 
-# In[39]:
+# In[79]:
 
 
 ### TODO: 训练模型
@@ -885,7 +879,7 @@ Resnet50_model.fit(train_Resnet50, train_targets,
           epochs=20, batch_size=20, callbacks=[checkpointer], verbose=1)
 
 
-# In[40]:
+# In[80]:
 
 
 ### TODO: 加载具有最佳验证loss的模型权重
@@ -902,7 +896,7 @@ Resnet50_model.load_weights('saved_models/weights.best.Resnet50.hdf5')
 # 
 # 在狗图像的测试数据集上试用你的模型。确保测试准确率大于60%。
 
-# In[41]:
+# In[81]:
 
 
 ### TODO: 在测试集上计算分类准确率
@@ -936,7 +930,7 @@ print('Test accuracy: %.4f%%' % test_accuracy)
 # 
 # ### __问题 9:__
 
-# In[42]:
+# In[82]:
 
 
 ### TODO: 写一个函数，该函数将图像的路径作为输入
@@ -985,7 +979,7 @@ print("label:",dog_names[np.argmax( train_targets[0])])
 # ---
 # 
 
-# In[47]:
+# In[83]:
 
 
 import matplotlib.image as mpimg
@@ -1038,7 +1032,7 @@ human_dog_detector(img_path)
 #     * 识别图片中狗的种类模型准确率在80%左右，考虑用图片增强来提高正确率。
 #     * 识别速度很慢，考虑更换轻量级的模型，如MobileNet
 
-# In[48]:
+# In[84]:
 
 
 ## TODO: 在你的电脑上，在步骤6中，至少在6张图片上运行你的算法。
@@ -1047,61 +1041,61 @@ local_files = np.array(glob("my_local_picture/*"))
 local_files
 
 
-# In[49]:
+# In[85]:
 
 
 human_dog_detector(local_files[0])
 
 
-# In[50]:
+# In[86]:
 
 
 human_dog_detector(local_files[1])
 
 
-# In[51]:
+# In[87]:
 
 
 human_dog_detector(local_files[2])
 
 
-# In[52]:
+# In[88]:
 
 
 human_dog_detector(local_files[3])
 
 
-# In[53]:
+# In[89]:
 
 
 human_dog_detector(local_files[4])
 
 
-# In[54]:
+# In[90]:
 
 
 human_dog_detector(local_files[5])
 
 
-# In[55]:
+# In[91]:
 
 
 human_dog_detector(local_files[6])
 
 
-# In[56]:
+# In[92]:
 
 
 human_dog_detector(local_files[7])
 
 
-# In[57]:
+# In[93]:
 
 
 human_dog_detector(local_files[8])
 
 
-# In[58]:
+# In[94]:
 
 
 human_dog_detector(local_files[9])
