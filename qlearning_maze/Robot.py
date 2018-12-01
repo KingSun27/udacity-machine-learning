@@ -48,7 +48,7 @@ class Robot(object):
         else:
             # TODO 2. Update parameters when learning
             self.t += 1
-            #self.epsilon = self.epsilon0/self.t
+            self.epsilon = self.epsilon0/self.t
             #if self.epsilon < 0.05:
              #   self.epsilon = 0.05
 
@@ -94,7 +94,7 @@ class Robot(object):
                 return np.random.choice(actions)
             else:
                 # TODO 7. Return action with highest q value
-                return actions[np.argmax(self.Qtable[self.state].values)]
+                return max(self.Qtable[self.state],key = self.Qtable[self.state].get)
         elif self.testing:
             return actions[np.argmax(self.Qtable[self.state].values)]
         else:
@@ -104,18 +104,11 @@ class Robot(object):
         """
         Update the qtable according to the given rule.
         """
-        nA = 4 
-        def get_pros_greedy_epsilon(state):
-            policy_s = np.ones(nA) * self.epsilon /nA
-            best_a = np.argmax(self.Qtable[state].values())
-            policy_s[best_a] = 1 - self.epsilon + self.epsilon /nA
-            return policy_s
 
         if self.learning:
             # TODO 8. When learning, update the q table according
             # to the given rules
-            next_state_expectation = np.dot(get_pros_greedy_epsilon(next_state),list(self.Qtable[next_state].values())) 
-            self.Qtable[self.state][action] += self.alpha * (r + self.gamma * next_state_expectation - self.Qtable[self.state][action])
+            self.Qtable[self.state][action] += self.alpha * (r + self.gamma * max(self.Qtable[self.state].values()) - self.Qtable[self.state][action])
 
 
     def update(self):
