@@ -72,9 +72,7 @@ class Robot(object):
         # Qtable[state] ={'u':xx, 'd':xx, ...}
         # If Qtable[state] already exits, then do
         # not change it.
-        if self.Qtable.get(state) is None:
-            self.Qtable[state]={'u':.0, 'r':.0, 'd':.0, 'l':.0}
-
+        self.Qtable.setdefault(state, {a: 0.0 for a in self.valid_actions})
 
     def choose_action(self):
         """
@@ -108,7 +106,7 @@ class Robot(object):
         if self.learning:
             # TODO 8. When learning, update the q table according
             # to the given rules
-            self.Qtable[self.state][action] += self.alpha * (r + self.gamma * max(self.Qtable[self.state].values()) - self.Qtable[self.state][action])
+            self.Qtable[self.state][action] += self.alpha * (r + self.gamma * max(self.Qtable[next_state].values()) - self.Qtable[self.state][action])
 
 
     def update(self):
