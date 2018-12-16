@@ -67,6 +67,12 @@ udacity机器学习期末项目，使用深度学习识别一张图片中的算�
 	
 		python train.py
 ## 探索可视化
-为了让结果直观，将使用plt绘制，测试集和验证集正确率，以及误差（loss）的曲线。
+为了让结果直观，将使用plt绘制，测试集和验证集正确率，以及误差（loss）的曲线。  
+
+由于我是分两次训练的，所以有两组图片。
 ![png](history/model_20epochs_accuracy.png)
 ![png](history/model_20epochs_loss.png)
+![png](history/model_21-40epochs_accuracy.png)
+![png](history/model_21-40epochs_loss.png)
+
+
