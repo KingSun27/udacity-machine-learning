@@ -4,24 +4,15 @@ from tensorflow.keras.callbacks import ModelCheckpoint,History,Callback
 from sklearn.model_selection import train_test_split
 from data import get_data
 from model import get_model
-'''
-class LossHistory(Callback):
-    def on_train_begin(self, logs={}):
-        self.losses = []
-        self.accs = []
 
-    def on_batch_end(self, batch, logs={}):
-        self.losses.append(logs.get('loss'))
-        self.accs.append(logs.get('lacc'))
-'''
 
 # step 1 整理数据
-X,y = get_data(70000)
-X_train=X[:65000]
-X_test=X[65000:]
+X,y = get_data(60000)
+X_train=X[:55000]
+X_test=X[55000:]
 y_train=y[:65000]
-y_test=y[65000:]
-
+y_test=y[55000:]
+# 没使用train_test_split的原因是，使用这个方法内存会溢出，就直接手动划分训练集，测试集了
 #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 print(X_train.shape)
 print(X_test.shape)
@@ -32,10 +23,10 @@ print(y_test.shape)
 #print(X_train[0])
 
 #step 2 确定模型
-model_version = '60000data_lr001_dropout_02_new3'
+model_version = 'model'
 model = get_model()
 model.summary()
-model.load_weights('saved_models/weights.best.60000data_lr001_dropout_02_new2.hdf5')
+#model.load_weights('saved_models/weights.best.model_before.hdf5')
 
 opt = tf.keras.optimizers.Adam(lr=0.0001, decay=1e-6)
 
@@ -47,7 +38,7 @@ model.compile(
     optimizer=opt,
     metrics=['accuracy'],
 )
-print(model.evaluate(X_test, y_test))
+#print(model.evaluate(X_test, y_test))
 
 history = model.fit(X_train,y_train,
 	epochs=20,
