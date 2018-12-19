@@ -51,7 +51,7 @@ udacity机器学习期末项目，使用深度学习识别一张图片中的算�
 - 然后输入一个由CNN和RNN组成的深度模型中，训练40个批次，四个小时左右达到99.6%的正确率
 ## 模型
 
-![svg](model.svg)
+![svg](report /images/model.svg)
 
 
 
