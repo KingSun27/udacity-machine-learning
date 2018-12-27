@@ -5,11 +5,11 @@ from model import get_model
 from data import get_data
 
 
-X,y = get_data(nrows = 5000,skiprows=90000)
+X,y = get_data(nrows = 5000,skiprows=95000,isReturnImageArray=True)
 
 
 model = get_model()
-model.load_weights('saved_models/weights.best.60000data_lr001_dropout_02_new3.hdf5')
+model.load_weights('saved_models/weights.best.alldata_lr00001_v3.hdf5')
 
 pre = model.predict(X)
 model.compile(
@@ -48,7 +48,12 @@ print(pre_onehot.shape)
 y_expression = get_expressions_from_onehot(y)
 y_pre_expression = get_expressions_from_onehot(get_onehot_from_softmax(pre))
 
-print(y_expression)
-print(y_pre_expression)
-
-
+right = 0
+wrong = []
+for i,_ in enumerate(y_expression):
+    if y_expression[i] == y_pre_expression[i]:
+        right += 1
+    else:
+        wrong.append(i)
+print(right)
+print(right/len(y_expression))

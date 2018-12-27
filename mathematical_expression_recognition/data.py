@@ -15,8 +15,16 @@ def onehot(size,n):
 	onehot[n] = 1
 	return onehot
 
-def get_data(nrows = 1000,skiprows=0):
-
+def get_data(nrows = 100000,skiprows=0,isReturnImageArray=False):
+	'''
+	参数：
+		nrows:读取的行数
+		skiprows:跳过的行数
+		isReturnImageArray:X返回格式是图片路径还是图片数组，默认False是返回图片路径
+	返回：
+		X：图片路径或者图片数组（取决于isReturnImageArray）
+		y：
+	'''
 	train_df = pd.read_csv(
 		'train.csv',
 		nrows=nrows,
@@ -24,15 +32,10 @@ def get_data(nrows = 1000,skiprows=0):
 		names=['filename','label'],header=0
 		)
 
-	
-	X = np.zeros((nrows,64,300,1))
-	for i,path in tqdm(enumerate(train_df['filename'])):
-		img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-		x = np.array(img)
-		x = x/255.0
-		x = x.reshape(64,300,1)
-		X[i] = x
+	X = train_df['filename']
 
+	if isReturnImageArray:
+		X = get_im_cv2(X)
 
 	# print(max([len(label) for label in  train_df['label']]))
 	# label中最长的是11位
@@ -57,6 +60,24 @@ def get_data(nrows = 1000,skiprows=0):
 
 	return X,y
 
+def get_im_cv2(paths):
+	X = np.zeros((len(paths),64,300,1))
+	for i,path in enumerate(paths):
+	#for i,path in tqdm(enumerate(paths)):
+		img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
+		x = np.array(img)
+		x = x/255.0 #归一化
+		x = x.reshape(64,300,1)
+		X[i] = x
+	return X
+
+def get_batch(X_paths,y,batch_size):
+	while 1:
+		for i in range(0,len(X_paths),batch_size):
+			X_batch = get_im_cv2(X_paths[i:i+batch_size])
+			y_batch = y[i:i+batch_size]
+			yield({'conv2d_input':X_batch},{'activation_4':y_batch})
 
 
-#get_data(20)
+#X,y = get_data()
+#print(X[:10])
